@@ -26,6 +26,8 @@ public class Person implements Serializable {
     public Person() {
     }
 
+    public Person(String firstName, String lastName, String gender, String address) {}
+
     public String getFirstName() {
         return firstName;
     }
