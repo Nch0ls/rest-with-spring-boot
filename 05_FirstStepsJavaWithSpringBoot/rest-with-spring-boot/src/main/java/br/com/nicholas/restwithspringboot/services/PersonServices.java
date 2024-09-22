@@ -21,7 +21,7 @@ public class PersonServices {
 
     public PersonVO findById(Long id) {
         logger.info("Finding person by id: " + id);
-        Person person = new Person();repository.findById(id).orElseThrow(()-> new ResourceNotFoundException("No records found for this ID"));
+        Person person = repository.findById(id).orElseThrow(()-> new ResourceNotFoundException("No records found for this ID"));
         return ModelToVoMapper(person);
     }
 
