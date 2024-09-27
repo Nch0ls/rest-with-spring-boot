@@ -1,15 +1,21 @@
 package br.com.nicholas.restwithspringboot.services;
 
+import br.com.nicholas.restwithspringboot.controllers.PersonController;
 import br.com.nicholas.restwithspringboot.data.vo.v1.PersonVO;
+import br.com.nicholas.restwithspringboot.exceptions.RequiredObjectIsNullException;
 import br.com.nicholas.restwithspringboot.exceptions.ResourceNotFoundException;
 import br.com.nicholas.restwithspringboot.model.Person;
 import br.com.nicholas.restwithspringboot.repositories.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+
+
 
 @Service
 public class PersonServices {
@@ -22,7 +28,10 @@ public class PersonServices {
     public PersonVO findById(Long id) {
         logger.info("Finding person by id: " + id);
         Person person = repository.findById(id).orElseThrow(()-> new ResourceNotFoundException("No records found for this ID"));
-        return ModelToVoMapper(person);
+        PersonVO vo = ModelToVoMapper(person);
+        vo.add(linkTo(methodOn(PersonController.class).findById(id)).withSelfRel());
+
+        return vo;
     }
 
     public List<PersonVO> findAll(){
@@ -32,6 +41,11 @@ public class PersonServices {
         for(Person person : personList){
             personVOList.add(ModelToVoMapper(person));
         }
+
+        for(PersonVO personVO : personVOList){
+            personVO.add(linkTo(methodOn(PersonController.class).findById(personVO.getKey())).withSelfRel());
+        }
+
         return personVOList;
     }
 
@@ -45,12 +59,18 @@ public class PersonServices {
     }
 
     public PersonVO create (PersonVO personVO) {
+        if (personVO == null) throw new RequiredObjectIsNullException();
+
         Person person = VOToModelMapper(personVO);
 
-        return ModelToVoMapper(repository.save(person));
+        PersonVO vo = ModelToVoMapper(repository.save(person));
+        vo.add(linkTo(methodOn(PersonController.class).findById(vo.getKey())).withSelfRel());
+        return vo;
     }
 
     public PersonVO update (PersonVO personVO) {
+        if(personVO == null) throw new RequiredObjectIsNullException();
+
         Person person = VOToModelMapper(personVO);
         logger.info("Updating person: " + person.getId());
         Person entity = repository.findById(person.getId()).orElseThrow(()-> new ResourceNotFoundException("No records found for this ID"));
@@ -60,7 +80,10 @@ public class PersonServices {
         entity.setAddress(person.getAddress());
         entity.setGender(person.getGender());
 
-        return ModelToVoMapper(repository.save(person));
+        PersonVO vo = ModelToVoMapper(repository.save(entity));
+        vo.add(linkTo(methodOn(PersonController.class).findById(vo.getKey())).withSelfRel());
+
+        return vo;
     }
 
     public void delete (Long id) {
@@ -71,19 +94,22 @@ public class PersonServices {
 
     public Person VOToModelMapper (PersonVO personVO) {
         return new Person(
-                personVO.firstName(),
-                personVO.lastName(),
-                personVO.gender(),
-                personVO.address()
+                personVO.getKey(),
+                personVO.getFirstName(),
+                personVO.getLastName(),
+                personVO.getAddress(),
+                personVO.getGender()
         );
     }
 
     public PersonVO ModelToVoMapper (Person person) {
         return new PersonVO(
+                person.getId(),
                 person.getFirstName(),
                 person.getLastName(),
-                person.getGender(),
-                person.getAddress()
+                person.getAddress(),
+                person.getGender()
+
         );
     }
 }

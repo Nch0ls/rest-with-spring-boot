@@ -28,6 +28,15 @@ public class Person implements Serializable {
 
     public Person(String firstName, String lastName, String gender, String address) {}
 
+    public Person(Long id,String firstName, String lastName, String gender, String address) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.gender = gender;
+        this.address = address;
+    }
+
+
     public String getFirstName() {
         return firstName;
     }
